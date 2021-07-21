@@ -9,7 +9,7 @@ redis.on("ready", (err) => {
   console.log("[REDIS] Connection established".red.underline.bold);
 });
 
-const set = (key, data, expiry = 60) => {
+const set = ({ key, data, expiry = 60 }) => {
   redis.set(key, JSON.stringify(data), "EX", expiry);
 };
 

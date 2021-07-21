@@ -1,24 +1,61 @@
+const jwt = require("jsonwebtoken");
 const asyncHandler = require("./async");
 const ErrorResponse = require("../utils/errorResponse");
+const User = require("../models/User");
 
-// Key protection for protected routes
+// Protect middleware
 exports.protect = asyncHandler(async (req, res, next) => {
-  let key;
+  let token;
 
-  if (req.headers.key) {
-    key = req.headers.key;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    // Grab the Bearer token from the Authorization header
+    token = req.headers.authorization.split(" ")[1];
+    // Get token from cookie (if it exists)
+  } else if (req.cookies.token) {
+    token = req.cookies.token;
   }
 
-  // Make sure key exists
-  if (!key) {
-    return next(new ErrorResponse("Not authorized to access this route", 401));
+  // Make sure token exists
+  if (!token) {
+    return next(
+      new ErrorResponse(
+        "Unauthorized - Not authorized to access this route",
+        401
+      )
+    );
   }
 
-  if (key === process.env.KEY) {
-    // if key is correct, continue
+  try {
+    // Verify jwt token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = await User.findById(decoded.id);
+
     next();
-  } else {
-    // otherwise throw error :~)
-    return next(new ErrorResponse("Not authorized to access this route", 401));
+  } catch (err) {
+    return next(
+      new ErrorResponse(
+        "Unauthorized - Not authorized to access this route",
+        401
+      )
+    );
   }
 });
+
+// Role-specific access
+exports.authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new ErrorResponse(
+          `Unauthorized - Your access level is unauthorized`,
+          403
+        )
+      );
+    }
+    next();
+  };
+};

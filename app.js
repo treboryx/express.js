@@ -24,8 +24,8 @@ connectDB().catch((err) => {
 });
 
 // Route files
-const cabinets = require("./routes/cabinets");
-const centers = require("./routes/centers");
+const auth = require("./routes/auth");
+const users = require("./routes/users");
 
 const app = express();
 
@@ -66,8 +66,8 @@ app.use(hpp());
 app.use(cors());
 
 // Mount routers
-app.use("/api/v1/cabinets", cabinets);
-app.use("/api/v1/centers", centers);
+app.use("/api/v1/auth", auth);
+app.use("/api/v1/users", users);
 
 app.use(errorHandler);
 
